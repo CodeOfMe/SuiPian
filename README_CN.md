@@ -1,54 +1,54 @@
 # SuiPian (碎片)
 
-File disguise and restoration tool - hide files in plain sight.
+文件伪装与恢复工具 - 将文件藏匿于众目睽睽之下。
 
 将任意文件拆散伪装成看似普通的文本文件，再用密码还原。
 
-## Features
+## 功能特点
 
-- **Hide**: Embed any file (images, documents, etc.) inside a seemingly normal text file
-- **Reveal**: Restore a hidden file from a morphed file using the password
-- **Validate**: Check if a file is a valid morphed file
-- **Info**: Get metadata about a morphed file
+- **隐藏**: 将任意文件（图片、文档等）嵌入到一个看似普通的文本文件中
+- **恢复**: 使用密码从伪装文件中还原原始文件
+- **验证**: 检查文件是否为有效的伪装文件
+- **信息**: 获取伪装文件的元数据
 
-## Requirements
+## 系统要求
 
 - Python 3.10+
 - lz4
 - cryptography
 
-## Installation
+## 安装
 
 ```bash
 pip install suipian
 ```
 
-Or install from source:
+或从源码安装：
 
 ```bash
 pip install -e .
 ```
 
-## Quick Start
+## 快速开始
 
-### CLI
+### 命令行
 
-Hide a file:
+隐藏文件：
 ```bash
 suipian hide image.png readme.txt -o output.txt -p mypassword
 ```
 
-Reveal a hidden file:
+恢复隐藏文件：
 ```bash
 suipian reveal output.txt -o restored.png -p mypassword
 ```
 
-Validate a morphed file:
+验证伪装文件：
 ```bash
 suipian validate output.txt
 ```
 
-Get info:
+查看信息：
 ```bash
 suipian info output.txt
 ```
@@ -76,19 +76,13 @@ print(result.success)
 print(result.data)
 ```
 
-## Agent Integration
-
-```python
-from suipian.tools import TOOLS, dispatch
-```
-
-## Development
+## 开发
 
 ```bash
 pip install -e ".[dev]"
 pytest tests/test_unified_api.py -v
 ```
 
-## License
+## 许可证
 
 GPL-3.0
