@@ -1,0 +1,26 @@
+PAPER DOWNLOAD ATTEMPT RESULTS
+================================
+
+Successfully Downloaded (5 of 9):
+-------------------------------
+1. Atallah_2001.pdf (256 KB) - "Natural language watermarking: Design, analysis, and implementation" (M. J. Atallah et al., 2001) - PDF v1.7
+2. Biryukov_2015.pdf (427 KB) - "Argon2: The memory-hard function for password hashing" (Biryukov et al., Cryptology ePrint 2015/430)
+3. Chen_2024.pdf (1.1 MB) - "TraceTarnish: Zero-width Unicode steganography + adversarial stylometry" (arXiv:2601.09056, 2024)
+4. Innamark_2025.pdf (790 KB) - "Innamark: A Whitespace Replacement Information-Hiding Method" (arXiv:2502.12710, IEEE Access 2025)
+5. Khorrami_2025.pdf (99 KB) - "Safeguarding LLMs Against Misuse and AI-Driven Malware Using Steganographic Canaries" (arXiv:2603.28655, 2025)
+
+Not Found / Paywalled (4 of 9):
+--------------------------------
+1. Johnson_1998.pdf - "Exploring steganography: Seeing the unseen" (IEEE Computer, 1998)
+2. Brassil_1994.pdf - "Electronic marking and identification techniques" (IEEE INFOCOM, 1994)
+3. Khate_2014.pdf - "Survey of Unicode steganography" (IJCA, 2014)
+4. Khate_2010.pdf - "Detecting Unicode-based steganography" (IEEE ETET, 2010)
+
+Not on arXiv / Preprint Servers:
+--------------------------------
+- Bauger_2010.pdf - "Invisible Unicode characters in steganography" (IEEE Security and Cryptography 2010)
+- Memon_2016.pdf - "Zero-width characters based text steganography" (IJACSA 2016)
+- Craver_1997.pdf - "On the invertibility of invisible watermarking techniques" (IEEE ICIP 1997)
+
+Summary: 5 of 9 papers successfully downloaded (56% success rate)
+Additional 3 highly-relevant recent arXiv papers found and downloaded
