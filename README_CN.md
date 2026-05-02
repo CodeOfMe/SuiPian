@@ -1,15 +1,22 @@
 # SuiPian (碎片)
 
-文件伪装与恢复工具 - 将文件藏匿于众目睽睽之下。
+将任意文件用零宽字符编码为纯文本，看起来完全正常，只有密钥才能还原。
 
-将任意文件拆散伪装成看似普通的文本文件，再用密码还原。
+## 原理
+
+1. **压缩**: LZ4 压缩源文件
+2. **加密**: AES-256-GCM + PBKDF2 密钥派生（10万次迭代）
+3. **编码**: 将加密后的二进制数据编码为零宽字符（​‌U+200B / ​‌U+200C）
+4. **拼接**: 零宽字符串追加到载体文本末尾，对外呈现完全正常的文本
+
+**无法被检测**: 无任何特殊标记、无 Base64 可见字符、零宽字符在大多数编辑器中完全隐形。
 
 ## 功能特点
 
-- **隐藏**: 将任意文件（图片、文档等）嵌入到一个看似普通的文本文件中
-- **恢复**: 使用密码从伪装文件中还原原始文件
-- **验证**: 检查文件是否为有效的伪装文件
-- **信息**: 获取伪装文件的元数据
+- **Hide**: 将任意文件（图片、文档等）编码为看似普通的文本文件
+- **Reveal**: 使用密码从伪装文本中还原原始文件
+- **Validate**: 检查文本中是否藏有数据
+- **Info**: 获取隐藏数据的元信息
 
 ## 系统要求
 
@@ -33,22 +40,22 @@ pip install -e .
 
 ### 命令行
 
-隐藏文件：
+隐藏文件（图片 → 文本）：
 ```bash
-suipian hide image.png readme.txt -o output.txt -p mypassword
+suipian hide photo.png article.txt -o output.txt -p mypassword
 ```
 
-恢复隐藏文件：
+还原文件（文本 → 图片）：
 ```bash
 suipian reveal output.txt -o restored.png -p mypassword
 ```
 
-验证伪装文件：
+验证是否藏有数据：
 ```bash
 suipian validate output.txt
 ```
 
-查看信息：
+查看隐藏文件信息：
 ```bash
 suipian info output.txt
 ```
@@ -59,8 +66,8 @@ suipian info output.txt
 from suipian import hide_file, reveal_file, validate_morph
 
 result = hide_file(
-    source="image.png",
-    carrier="readme.txt",
+    source="photo.png",
+    carrier="article.txt",
     output="output.txt",
     password="secret"
 )

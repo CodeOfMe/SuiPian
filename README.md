@@ -1,15 +1,22 @@
 # SuiPian (碎片)
 
-File disguise and restoration tool - hide files in plain sight.
+Encode any file as plain text using invisible zero-width characters — looks perfectly normal, only the key can restore it.
 
-将任意文件拆散伪装成看似普通的文本文件，再用密码还原。
+## How It Works
+
+1. **Compress**: LZ4 compression of source file
+2. **Encrypt**: AES-256-GCM with PBKDF2 key derivation (100k iterations)
+3. **Encode**: Binary payload → zero-width characters (​‌U+200B / ​‌U+200C)
+4. **Append**: Hidden data appended to carrier text end — output looks 100% normal
+
+**Undetectable**: No special markers, no visible Base64, zero-width chars are invisible in most editors.
 
 ## Features
 
-- **Hide**: Embed any file (images, documents, etc.) inside a seemingly normal text file
-- **Reveal**: Restore a hidden file from a morphed file using the password
-- **Validate**: Check if a file is a valid morphed file
-- **Info**: Get metadata about a morphed file
+- **Hide**: Encode any file (image, document, etc.) into a seemingly normal text file
+- **Reveal**: Restore the original file from the disguised text using the password
+- **Validate**: Check if a text file contains hidden data
+- **Info**: Get metadata about hidden data
 
 ## Requirements
 
@@ -33,22 +40,22 @@ pip install -e .
 
 ### CLI
 
-Hide a file:
+Hide a file (image → text):
 ```bash
-suipian hide image.png readme.txt -o output.txt -p mypassword
+suipian hide photo.png article.txt -o output.txt -p mypassword
 ```
 
-Reveal a hidden file:
+Reveal a file (text → image):
 ```bash
 suipian reveal output.txt -o restored.png -p mypassword
 ```
 
-Validate a morphed file:
+Validate hidden data:
 ```bash
 suipian validate output.txt
 ```
 
-Get info:
+Get hidden file info:
 ```bash
 suipian info output.txt
 ```
@@ -59,8 +66,8 @@ suipian info output.txt
 from suipian import hide_file, reveal_file, validate_morph
 
 result = hide_file(
-    source="image.png",
-    carrier="readme.txt",
+    source="photo.png",
+    carrier="article.txt",
     output="output.txt",
     password="secret"
 )

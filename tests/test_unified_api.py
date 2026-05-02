@@ -9,6 +9,14 @@ from pathlib import Path
 
 import pytest
 
+ZW_ZERO = "\u200b"
+ZW_ONE = "\u200c"
+ZW_CHARS = {ZW_ZERO, ZW_ONE}
+
+
+def count_zw(text: str) -> int:
+    return sum(1 for c in text if c in ZW_CHARS)
+
 
 class TestToolResult:
     def test_success_result(self):
@@ -57,7 +65,7 @@ class TestHideAPI:
         source = tmp_path / "test.txt"
         source.write_bytes(b"secret data here")
         carrier = tmp_path / "carrier.txt"
-        carrier.write_text("Normal text content")
+        carrier.write_text("Normal text content for testing purposes.")
         output = tmp_path / "out.txt"
 
         result = hide_file(source=source, carrier=carrier, output=output, password="pw123")
@@ -65,13 +73,16 @@ class TestHideAPI:
         assert output.exists()
         assert "version" in result.metadata
 
+        stego = output.read_text()
+        assert count_zw(stego) > 0
+
     def test_hide_with_path_object(self, tmp_path):
         from suipian.api import hide_file
 
         source = tmp_path / "test.bin"
         source.write_bytes(b"\x00\x01\x02\x03")
         carrier = tmp_path / "c.txt"
-        carrier.write_text("Carrier")
+        carrier.write_text("Carrier text for hiding data.")
         output = tmp_path / "out.txt"
 
         result = hide_file(
@@ -141,7 +152,7 @@ class TestRevealAPI:
         source = tmp_path / "test.txt"
         source.write_bytes(b"secret data here")
         carrier = tmp_path / "carrier.txt"
-        carrier.write_text("Normal text")
+        carrier.write_text("Normal text for carrier purposes.")
         morphed = tmp_path / "out.txt"
         revealed = tmp_path / "revealed.txt"
 
@@ -175,11 +186,11 @@ class TestRevealAPI:
         )
         assert result.success is False
 
-    def test_reveal_corrupted_file(self, tmp_path):
+    def test_reveal_no_hidden_data(self, tmp_path):
         from suipian.api import reveal_file
 
         fake = tmp_path / "fake.txt"
-        fake.write_text("This is not a morphed file at all")
+        fake.write_text("This is just normal text with no hidden data at all.")
 
         result = reveal_file(morphed=fake, output=tmp_path / "out.txt", password="pw")
         assert result.success is False
@@ -199,7 +210,7 @@ class TestValidateAPI:
         source = tmp_path / "test.bin"
         source.write_bytes(b"\x00\x01\x02\x03")
         carrier = tmp_path / "carrier.txt"
-        carrier.write_text("Just a text file")
+        carrier.write_text("Just a text file for testing.")
         morphed = tmp_path / "morphed.txt"
 
         hide_file(source=source, carrier=carrier, output=morphed, password="pwd")
@@ -231,7 +242,7 @@ class TestGetInfoAPI:
         source = tmp_path / "test.bin"
         source.write_bytes(b"\x00\x01\x02\x03")
         carrier = tmp_path / "carrier.txt"
-        carrier.write_text("Just text")
+        carrier.write_text("Just text for carrier.")
         morphed = tmp_path / "morphed.txt"
 
         hide_file(source=source, carrier=carrier, output=morphed, password="pwd")
@@ -245,6 +256,71 @@ class TestGetInfoAPI:
 
         result = get_info(file="/nonexistent/file.txt")
         assert result.success is False
+
+
+class TestZeroWidthSteganography:
+    def test_output_looks_normal(self, tmp_path):
+        from suipian.api import hide_file
+
+        source = tmp_path / "secret.txt"
+        source.write_bytes(b"top secret data")
+        carrier = tmp_path / "normal.txt"
+        carrier.write_text(
+            "Dear colleague,\n\n"
+            "I hope this message finds you well. "
+            "Please review the attached document at your earliest convenience.\n\n"
+            "Best regards,\n"
+            "The Management Team\n"
+        )
+        output = tmp_path / "stego.txt"
+
+        hide_file(source=source, carrier=carrier, output=output, password="secret")
+
+        stego = output.read_text()
+        carrier_text = carrier.read_text()
+
+        assert stego.startswith("Dear colleague,")
+        assert "Best regards" in stego
+        assert "The Management Team" in stego
+
+        visible_chars = [c for c in stego if c not in ZW_CHARS]
+        assert "".join(visible_chars).strip() == carrier_text.strip()
+
+    def test_no_detectable_markers(self, tmp_path):
+        from suipian.api import hide_file
+
+        source = tmp_path / "test.bin"
+        source.write_bytes(b"test data")
+        carrier = tmp_path / "carrier.txt"
+        carrier.write_text("Normal looking text here.")
+        output = tmp_path / "out.txt"
+
+        hide_file(source=source, carrier=carrier, output=output, password="pw")
+
+        content = output.read_text()
+        assert "BEGIN" not in content
+        assert "END" not in content
+        assert "HEADER" not in content
+        assert "FOOTER" not in content
+        assert "SUIPIAN" not in content
+        assert "base64" not in content.lower()
+
+    def test_zero_width_encoding_roundtrip(self):
+        from suipian.core import MorphEngine
+
+        engine = MorphEngine()
+        original = b"\x00\xff\x80\x01\xfe\x7f"
+        encoded = engine._bytes_to_zw(original)
+        decoded = engine._zw_to_bytes(encoded)
+        assert decoded == original
+
+    def test_zero_width_extraction(self):
+        from suipian.core import MorphEngine
+
+        engine = MorphEngine()
+        text = f"a{ZW_ZERO}b{ZW_ONE}c{ZW_ZERO}d"
+        extracted = engine._extract_zw(text)
+        assert extracted == ZW_ZERO + ZW_ONE + ZW_ZERO
 
 
 class TestToolsSchema:
@@ -296,7 +372,7 @@ class TestToolsDispatch:
             source.write_bytes(b"test dispatch data")
 
             carrier = tmp_path / "carrier.txt"
-            carrier.write_text("Carrier content")
+            carrier.write_text("Carrier content for testing.")
             output = tmp_path / "out.txt"
 
             result = dispatch(
@@ -319,7 +395,7 @@ class TestToolsDispatch:
             source.write_bytes(b"test reveal data")
 
             carrier = tmp_path / "carrier.txt"
-            carrier.write_text("Carrier content")
+            carrier.write_text("Carrier content for testing.")
             morphed = tmp_path / "out.txt"
             revealed = tmp_path / "revealed.bin"
 
@@ -480,7 +556,7 @@ class TestCLIFlags:
         source = tmp_path / "test.txt"
         source.write_bytes(b"cli json test")
         carrier = tmp_path / "carrier.txt"
-        carrier.write_text("carrier")
+        carrier.write_text("carrier text for cli testing")
         output = tmp_path / "out.txt"
 
         r = self._run_cli(
@@ -501,7 +577,7 @@ class TestCLIFlags:
         source = tmp_path / "test.txt"
         source.write_bytes(b"cli info test")
         carrier = tmp_path / "carrier.txt"
-        carrier.write_text("carrier")
+        carrier.write_text("carrier text for cli testing")
         morphed = tmp_path / "out.txt"
 
         self._run_cli(
@@ -521,7 +597,7 @@ class TestCLIFlags:
         source = tmp_path / "test.txt"
         source.write_bytes(b"cli validate test")
         carrier = tmp_path / "carrier.txt"
-        carrier.write_text("carrier")
+        carrier.write_text("carrier text for cli testing")
         morphed = tmp_path / "out.txt"
 
         self._run_cli(
@@ -596,9 +672,10 @@ class TestEndToEnd:
         assert result.success is True
 
         content = morphed.read_text()
-        assert "-----BEGIN SUIPIAN HEADER-----" in content
-        assert "-----END SUIPIAN FOOTER-----" in content
+        assert "-----BEGIN" not in content
+        assert "-----END" not in content
         assert "This is a completely normal looking text file" in content
+        assert count_zw(content) > 0
 
         val_result = validate_morph(file=morphed)
         assert val_result.success is True
@@ -664,7 +741,8 @@ class TestEndToEnd:
         assert result.success is True
 
         morphed_content = morphed.read_text()
-        assert morphed_content.startswith(carrier_content)
+        visible = [c for c in morphed_content if c not in ZW_CHARS]
+        assert "".join(visible).strip() == carrier_content.strip()
 
     def test_large_file_roundtrip(self, tmp_path):
         from suipian.api import hide_file, reveal_file
@@ -673,10 +751,40 @@ class TestEndToEnd:
         source = tmp_path / "large.bin"
         source.write_bytes(large_data)
         carrier = tmp_path / "carrier.txt"
-        carrier.write_text("Carrier for large file")
+        carrier.write_text("Carrier for large file. " * 1000)
         morphed = tmp_path / "out.txt"
         revealed = tmp_path / "restored.bin"
 
         hide_file(source=source, carrier=carrier, output=morphed, password="pw")
         reveal_file(morphed=morphed, output=revealed, password="pw")
         assert revealed.read_bytes() == large_data
+
+    def test_image_roundtrip_perfect(self, tmp_path):
+        from suipian.api import hide_file, reveal_file
+
+        png_header = bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        original = png_header + os.urandom(5000)
+        source = tmp_path / "photo.png"
+        source.write_bytes(original)
+
+        carrier = tmp_path / "article.txt"
+        carrier.write_text(
+            "The study of cryptography has evolved significantly over the centuries. "
+            "From ancient substitution ciphers to modern public-key systems, "
+            "the field continues to advance. This article explores the fundamental "
+            "principles of secure communication and data protection in the digital age.\n\n"
+            "Researchers have developed numerous techniques for ensuring confidentiality, "
+            "integrity, and authenticity of information. These methods form the backbone "
+            "of modern security protocols used worldwide.\n\n"
+            "In conclusion, the importance of robust cryptographic systems cannot be "
+            "overstated in our increasingly connected world."
+        )
+
+        morphed = tmp_path / "output.txt"
+        hide_file(source=source, carrier=carrier, output=morphed, password="testkey")
+
+        revealed = tmp_path / "restored.png"
+        reveal_file(morphed=morphed, output=revealed, password="testkey")
+
+        assert revealed.read_bytes() == original
+        assert len(revealed.read_bytes()) == len(original)
